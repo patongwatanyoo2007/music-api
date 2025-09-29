@@ -1,10 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 
 app = FastAPI()
 
-# เปิด CORS ให้ Softr เรียก API
+# เปิด CORS ให้ Softr เรียก API ได้
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -13,35 +14,43 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Serve ไฟล์เพลงและรูปอัลบั้ม
+# Serve ไฟล์เพลงและรูปภาพ
 app.mount("/media/songs", StaticFiles(directory="media/songs"), name="songs")
 app.mount("/media/album_covers", StaticFiles(directory="media/album_covers"), name="album_covers")
 
-songs_data = [
-    {
-        "id":1,
-        "title":"อีกกี่วันจะได้พบเธอ",
-        "song_format":"WAV",
-        "artist":"MKLG ก้านกล้วย & MPLG เปตอง",
-        "album":"Album Name",
-        "album_cover_url":"https://music-api-lxh4.onrender.com/media/album_covers/album1.jpg",
-        "song_url":"https://music-api-lxh4.onrender.com/media/songs/song1.wav",
-        "composer":"วทัญญู กันหาวงศ์",
-        "producer":"วทัญญู กันหาวงศ์",
-        "arranger":"วทัญญู กันหาวงศ์",
-        "musician":"วทัญญู กันหาวงศ์",
-        "phone":"0812345678",
-        "email":"example@example.com",
-        "facebook":"https://facebook.com/artist",
-        "release_date":"2025-09-29",
-        "genre":"Pop",
-        "upc_ean":"123456789012",
-        "isrc":"TH-A01-20-00001",
-        "explicit":False,
-        "content_id":"content_001"
-    }
-]
+# โมเดลข้อมูลเพลง
+class Song(BaseModel):
+    title: str
+    song_format: str
+    artist: str
+    album: str
+    album_cover_url: str
+    song_url: str
+    composer: str
+    producer: str
+    arranger: str
+    musician: str
+    phone: str
+    email: str
+    facebook: str
+    release_date: str
+    genre: str
+    upc_ean: str
+    isrc: str
+    explicit: bool
+    content_id: str
+
+# Mock database
+songs_data = []
 
 @app.get("/songs")
 def get_songs():
     return songs_data
+
+@app.post("/songs")
+def add_song(song: Song):
+    new_id = len(songs_data) + 1
+    song_dict = song.dict()
+    song_dict["id"] = new_id
+    songs_data.append(song_dict)
+    return song_dict
